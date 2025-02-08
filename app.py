@@ -290,6 +290,6 @@ def plot_driver_styling(year, weekend, session_type, drivers=None):
     return f"data:image/png;base64,{base64_img}"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False, host='0.0.0.0', port=5000)
 
 

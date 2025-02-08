@@ -3,3 +3,9 @@
 
 .vscode/*
 
+.dockerignore
+
+.env
+
+.env.local
+
