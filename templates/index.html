@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Race Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'f1-red': '#e10600',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-f1-red shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <h1 class="text-2xl font-bold text-white">F1 Race Analysis Dashboard</h1>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <form method="POST" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                        <input type="number" 
+                               id="year" 
+                               name="year" 
+                               min="2018" 
+                               max="2024" 
+                               value="{{ year if year else 2024 }}" 
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-f1-red focus:border-f1-red">
+                    </div>
+
+                    <div>
+                        <label for="weekend" class="block text-sm font-medium text-gray-700 mb-1">Race Weekend</label>
+                        <input type="number" 
+                               id="weekend" 
+                               name="weekend" 
+                               min="1" 
+                               max="24" 
+                               value="{{ weekend if weekend else 1 }}" 
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-f1-red focus:border-f1-red">
+                    </div>
+
+                    <div>
+                        <label for="session" class="block text-sm font-medium text-gray-700 mb-1">Session Type</label>
+                        <select id="session" 
+                                name="session" 
+                                required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-f1-red focus:border-f1-red">
+                            <option value="R" {% if session == 'R' %}selected{% endif %}>Race</option>
+                            <option value="Q" {% if session == 'Q' %}selected{% endif %}>Qualifying</option>
+                            <option value="S" {% if session == 'S' %}selected{% endif %}>Sprint</option>
+                            <option value="FP1" {% if session == 'FP1' %}selected{% endif %}>Practice 1</option>
+                            <option value="FP2" {% if session == 'FP2' %}selected{% endif %}>Practice 2</option>
+                            <option value="FP3" {% if session == 'FP3' %}selected{% endif %}>Practice 3</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
+                    <button type="submit" 
+                            class="px-6 py-2 bg-f1-red text-white font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
+                        Generate Analysis
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% if stints_img %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Race Strategy</h2>
+            <div class="flex justify-center">
+                <img src="{{ stints_img }}" 
+                     alt="Race Strategy Plot" 
+                     class="max-w-full h-auto rounded-lg">
+            </div>
+        </div>
+        {% endif %}
+
+        {% if tire_deg_img %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Tire Degradation</h2>
+            <div class="flex justify-center">
+                <img src="{{ tire_deg_img }}" 
+                     alt="Tire Degradation Plot" 
+                     class="max-w-full h-auto rounded-lg">
+            </div>
+        </div>
+        {% endif %}
+
+        {% if laptimes_img %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Lap Time Distribution</h2>
+            <div class="flex justify-center">
+                <img src="{{ laptimes_img }}" 
+                     alt="Lap Time Distribution Plot" 
+                     class="max-w-full h-auto rounded-lg">
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Add this before the head-to-head section -->
+        {% if driver_style_img %}
+        <div class="space-y-8">
+            <!-- Driver Style Form -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Driver Style Comparison Settings</h2>
+                <form method="POST" class="space-y-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label for="wknd" class="block text-sm font-medium text-gray-700 mb-1">Grand Prix</label>
+                            <select id="wknd" 
+                                    name="wknd" 
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-f1-red focus:border-f1-red">
+                                <option value="1" {% if wknd == '1' %}selected{% endif %}>Bahrain Grand Prix</option>
+                                <option value="2" {% if wknd == '2' %}selected{% endif %}>Saudi Arabian Grand Prix</option>
+                                <option value="3" {% if wknd == '3' %}selected{% endif %}>Australian Grand Prix</option>
+                                <option value="4" {% if wknd == '4' %}selected{% endif %}>Japanese Grand Prix</option>
+                                <option value="5" {% if wknd == '5' %}selected{% endif %}>Chinese Grand Prix</option>
+                                <option value="6" {% if wknd == '6' %}selected{% endif %}>Miami Grand Prix</option>
+                                <option value="7" {% if wknd == '7' %}selected{% endif %}>Emilia Romagna Grand Prix</option>
+                                <option value="8" {% if wknd == '8' %}selected{% endif %}>Monaco Grand Prix</option>
+                                <option value="9" {% if wknd == '9' %}selected{% endif %}>Canadian Grand Prix</option>
+                                <option value="10" {% if wknd == '10' %}selected{% endif %}>Spanish Grand Prix</option>
+                                <option value="11" {% if wknd == '11' %}selected{% endif %}>Austrian Grand Prix</option>
+                                <option value="12" {% if wknd == '12' %}selected{% endif %}>British Grand Prix</option>
+                                <option value="13" {% if wknd == '13' %}selected{% endif %}>Hungarian Grand Prix</option>
+                                <option value="14" {% if wknd == '14' %}selected{% endif %}>Belgian Grand Prix</option>
+                                <option value="15" {% if wknd == '15' %}selected{% endif %}>Dutch Grand Prix</option>
+                                <option value="16" {% if wknd == '16' %}selected{% endif %}>Italian Grand Prix</option>
+                                <option value="17" {% if wknd == '17' %}selected{% endif %}>Azerbaijan Grand Prix</option>
+                                <option value="18" {% if wknd == '18' %}selected{% endif %}>Singapore Grand Prix</option>
+                                <option value="19" {% if wknd == '19' %}selected{% endif %}>United States Grand Prix</option>
+                                <option value="20" {% if wknd == '20' %}selected{% endif %}>Mexico City Grand Prix</option>
+                                <option value="21" {% if wknd == '21' %}selected{% endif %}>Sao Paulo Grand Prix</option>
+                                <option value="22" {% if wknd == '22' %}selected{% endif %}>Las Vegas Grand Prix</option>
+                                <option value="23" {% if wknd == '23' %}selected{% endif %}>Qatar Grand Prix</option>
+                                <option value="24" {% if wknd == '24' %}selected{% endif %}>Abu Dhabi Grand Prix</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Select Drivers to Compare</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {% for code, name in [
+                                    ('ALB', 'Alexander Albon'), ('ALO', 'Fernando Alonso'),
+                                    ('BOT', 'Valtteri Bottas'), ('BEA', 'Oliver Bearman'),
+                                    ('GAS', 'Pierre Gasly'), ('HAM', 'Lewis Hamilton'),
+                                    ('HUL', 'Nico Hulkenberg'), ('LEC', 'Charles Leclerc'),
+                                    ('MAG', 'Kevin Magnussen'), ('NOR', 'Lando Norris'),
+                                    ('OCO', 'Esteban Ocon'), ('PER', 'Sergio Perez'),
+                                    ('PIA', 'Oscar Piastri'), ('RIC', 'Daniel Ricciardo'),
+                                    ('RUS', 'George Russell'), ('SAI', 'Carlos Sainz'),
+                                    ('SAR', 'Logan Sargeant'), ('STR', 'Lance Stroll'),
+                                    ('TSU', 'Yuki Tsunoda'), ('VER', 'Max Verstappen'),
+                                    ('ZHO', 'Zhou Guanyu')
+                                ] %}
+                                <div class="flex items-center">
+                                    <input type="checkbox" 
+                                           id="driver_{{ code }}" 
+                                           name="selected_drivers" 
+                                           value="{{ code }}"
+                                           {% if code in selected_drivers %}checked{% endif %}
+                                           class="h-4 w-4 text-f1-red focus:ring-f1-red border-gray-300 rounded">
+                                    <label for="driver_{{ code }}" class="ml-2 text-sm text-gray-700">{{ name }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center">
+                        <button type="submit" 
+                                name="driver_style_submit"
+                                class="px-6 py-2 bg-f1-red text-white font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
+                            Update Driver Style Comparison
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Driver Style Plot -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Driver Style Comparison</h2>
+                <div class="flex justify-center">
+                    <img src="{{ driver_style_img }}" 
+                         alt="Driver Style Comparison Plot" 
+                         class="max-w-full h-auto rounded-lg">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Head to Head Section -->
+        {% if head_to_head_img %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Head to Head Comparison</h2>
+            
+            <!-- Form and Plot Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Form Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-700 mb-4">Select Drivers</h3>
+                    <form method="POST" class="space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="wknd" class="block text-sm font-medium text-gray-700 mb-1">Grand Prix</label>
+                                <select id="wknd" 
+                                        name="wknd" 
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-f1-red focus:border-f1-red">
+                                    <option value="1" {% if wknd == '1' %}selected{% endif %}>Bahrain Grand Prix</option>
+                                    <option value="2" {% if wknd == '2' %}selected{% endif %}>Saudi Arabian Grand Prix</option>
+                                    <option value="3" {% if wknd == '3' %}selected{% endif %}>Australian Grand Prix</option>
+                                    <option value="4" {% if wknd == '4' %}selected{% endif %}>Japanese Grand Prix</option>
+                                    <option value="5" {% if wknd == '5' %}selected{% endif %}>Chinese Grand Prix</option>
+                                    <option value="6" {% if wknd == '6' %}selected{% endif %}>Miami Grand Prix</option>
+                                    <option value="7" {% if wknd == '7' %}selected{% endif %}>Emilia Romagna Grand Prix</option>
+                                    <option value="8" {% if wknd == '8' %}selected{% endif %}>Monaco Grand Prix</option>
+                                    <option value="9" {% if wknd == '9' %}selected{% endif %}>Canadian Grand Prix</option>
+                                    <option value="10" {% if wknd == '10' %}selected{% endif %}>Spanish Grand Prix</option>
+                                    <option value="11" {% if wknd == '11' %}selected{% endif %}>Austrian Grand Prix</option>
+                                    <option value="12" {% if wknd == '12' %}selected{% endif %}>British Grand Prix</option>
+                                    <option value="13" {% if wknd == '13' %}selected{% endif %}>Hungarian Grand Prix</option>
+                                    <option value="14" {% if wknd == '14' %}selected{% endif %}>Belgian Grand Prix</option>
+                                    <option value="15" {% if wknd == '15' %}selected{% endif %}>Dutch Grand Prix</option>
+                                    <option value="16" {% if wknd == '16' %}selected{% endif %}>Italian Grand Prix</option>
+                                    <option value="17" {% if wknd == '17' %}selected{% endif %}>Azerbaijan Grand Prix</option>
+                                    <option value="18" {% if wknd == '18' %}selected{% endif %}>Singapore Grand Prix</option>
+                                    <option value="19" {% if wknd == '19' %}selected{% endif %}>United States Grand Prix</option>
+                                    <option value="20" {% if wknd == '20' %}selected{% endif %}>Mexico City Grand Prix</option>
+                                    <option value="21" {% if wknd == '21' %}selected{% endif %}>Sao Paulo Grand Prix</option>
+                                    <option value="22" {% if wknd == '22' %}selected{% endif %}>Las Vegas Grand Prix</option>
+                                    <option value="23" {% if wknd == '23' %}selected{% endif %}>Qatar Grand Prix</option>
+                                    <option value="24" {% if wknd == '24' %}selected{% endif %}>Abu Dhabi Grand Prix</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="driver1" class="block text-sm font-medium text-gray-700 mb-1">Driver 1</label>
+                                <select id="driver1" 
+                                        name="driver1" 
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-f1-red focus:border-f1-red">
+                                    <option value="ALB" {% if driver1 == 'ALB' %}selected{% endif %}>Alexander Albon</option>
+                                    <option value="ALO" {% if driver1 == 'ALO' %}selected{% endif %}>Fernando Alonso</option>
+                                    <option value="BOT" {% if driver1 == 'BOT' %}selected{% endif %}>Valtteri Bottas</option>
+                                    <option value="BEA" {% if driver1 == 'BEA' %}selected{% endif %}>Oliver Bearman</option>
+                                    <option value="GAS" {% if driver1 == 'GAS' %}selected{% endif %}>Pierre Gasly</option>
+                                    <option value="HAM" {% if driver1 == 'HAM' %}selected{% endif %}>Lewis Hamilton</option>
+                                    <option value="HUL" {% if driver1 == 'HUL' %}selected{% endif %}>Nico Hulkenberg</option>
+                                    <option value="LEC" {% if driver1 == 'LEC' %}selected{% endif %}>Charles Leclerc</option>
+                                    <option value="MAG" {% if driver1 == 'MAG' %}selected{% endif %}>Kevin Magnussen</option>
+                                    <option value="NOR" {% if driver1 == 'NOR' %}selected{% endif %}>Lando Norris</option>
+                                    <option value="OCO" {% if driver1 == 'OCO' %}selected{% endif %}>Esteban Ocon</option>
+                                    <option value="PER" {% if driver1 == 'PER' %}selected{% endif %}>Sergio Perez</option>
+                                    <option value="PIA" {% if driver1 == 'PIA' %}selected{% endif %}>Oscar Piastri</option>
+                                    <option value="RIC" {% if driver1 == 'RIC' %}selected{% endif %}>Daniel Ricciardo</option>
+                                    <option value="RUS" {% if driver1 == 'RUS' %}selected{% endif %}>George Russell</option>
+                                    <option value="SAI" {% if driver1 == 'SAI' %}selected{% endif %}>Carlos Sainz</option>
+                                    <option value="SAR" {% if driver1 == 'SAR' %}selected{% endif %}>Logan Sargeant</option>
+                                    <option value="STR" {% if driver1 == 'STR' %}selected{% endif %}>Lance Stroll</option>
+                                    <option value="TSU" {% if driver1 == 'TSU' %}selected{% endif %}>Yuki Tsunoda</option>
+                                    <option value="VER" {% if driver1 == 'VER' %}selected{% endif %}>Max Verstappen</option>
+                                    <option value="ZHO" {% if driver1 == 'ZHO' %}selected{% endif %}>Zhou Guanyu</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="driver2" class="block text-sm font-medium text-gray-700 mb-1">Driver 2</label>
+                                <select id="driver2" 
+                                        name="driver2" 
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-f1-red focus:border-f1-red">
+                                    <option value="ALB" {% if driver2 == 'ALB' %}selected{% endif %}>Alexander Albon</option>
+                                    <option value="ALO" {% if driver2 == 'ALO' %}selected{% endif %}>Fernando Alonso</option>
+                                    <option value="BOT" {% if driver2 == 'BOT' %}selected{% endif %}>Valtteri Bottas</option>
+                                    <option value="BEA" {% if driver2 == 'BEA' %}selected{% endif %}>Oliver Bearman</option>
+                                    <option value="GAS" {% if driver2 == 'GAS' %}selected{% endif %}>Pierre Gasly</option>
+                                    <option value="HAM" {% if driver2 == 'HAM' %}selected{% endif %}>Lewis Hamilton</option>
+                                    <option value="HUL" {% if driver2 == 'HUL' %}selected{% endif %}>Nico Hulkenberg</option>
+                                    <option value="LEC" {% if driver2 == 'LEC' %}selected{% endif %}>Charles Leclerc</option>
+                                    <option value="MAG" {% if driver2 == 'MAG' %}selected{% endif %}>Kevin Magnussen</option>
+                                    <option value="NOR" {% if driver2 == 'NOR' %}selected{% endif %}>Lando Norris</option>
+                                    <option value="OCO" {% if driver2 == 'OCO' %}selected{% endif %}>Esteban Ocon</option>
+                                    <option value="PER" {% if driver2 == 'PER' %}selected{% endif %}>Sergio Perez</option>
+                                    <option value="PIA" {% if driver2 == 'PIA' %}selected{% endif %}>Oscar Piastri</option>
+                                    <option value="RIC" {% if driver2 == 'RIC' %}selected{% endif %}>Daniel Ricciardo</option>
+                                    <option value="RUS" {% if driver2 == 'RUS' %}selected{% endif %}>George Russell</option>
+                                    <option value="SAI" {% if driver2 == 'SAI' %}selected{% endif %}>Carlos Sainz</option>
+                                    <option value="SAR" {% if driver2 == 'SAR' %}selected{% endif %}>Logan Sargeant</option>
+                                    <option value="STR" {% if driver2 == 'STR' %}selected{% endif %}>Lance Stroll</option>
+                                    <option value="TSU" {% if driver2 == 'TSU' %}selected{% endif %}>Yuki Tsunoda</option>
+                                    <option value="VER" {% if driver2 == 'VER' %}selected{% endif %}>Max Verstappen</option>
+                                    <option value="ZHO" {% if driver2 == 'ZHO' %}selected{% endif %}>Zhou Guanyu</option>
+                                </select>
+                            </div>
+
+                            <div class="pt-2">
+                                <button type="submit" 
+                                        name="head_to_head_submit"
+                                        class="w-full px-6 py-2 bg-f1-red text-white font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">
+                                    Update Comparison
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Plot Section -->
+                <div class="flex items-center justify-center">
+                    <img src="{{ head_to_head_img }}" 
+                         alt="Head to Head Comparison Plot" 
+                         class="max-w-full h-auto rounded-lg">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer class="bg-gray-800 text-white py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm">Data provided by FastF1</p>
+        </div>
+    </footer>
+</body>
+</html>
