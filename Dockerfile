@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir -p /cache/fastf1 && \
     chmod 777 /cache/fastf1
 
+RUN apt-get update && apt-get install -y redis-server \
+    && rm -rf /var/lib/apt/lists/*
+
+
 # Set environment variable for FastF1 cache
 ENV FASTF1_CACHE_DIR=/cache/fastf1
 
