@@ -10,6 +10,13 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Create cache directory for FastF1 with proper permissions
+RUN mkdir -p /cache/fastf1 && \
+    chmod 777 /cache/fastf1
+
+# Set environment variable for FastF1 cache
+ENV FASTF1_CACHE_DIR=/cache/fastf1
+
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 
@@ -19,14 +26,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Create cache directory for FastF1
-RUN mkdir -p /cache/fastf1
-
-# Set environment variable for FastF1 cache
-ENV FASTF1_CACHE_DIR=/cache/fastf1
-
 # Expose port 5000
 EXPOSE 5000
 
 # Run the application
-CMD ["python", "driver_stints.py"] 
+CMD ["python", "app.py"] 
