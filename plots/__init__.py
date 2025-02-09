@@ -7,11 +7,11 @@ from .tire_analysis import plot_tire_analysis
 from .driver_speed import plot_driver_speed
 
 __all__ = [
-    'plot_driver_stints',
-    'plot_tire_deg',
-    'plot_laptimes_distribution',
-    'plot_head_to_head',
-    'plot_driver_styling',
-    'plot_tire_analysis',
-    'plot_driver_speed'
-] 
+    "plot_driver_stints",
+    "plot_tire_deg",
+    "plot_laptimes_distribution",
+    "plot_head_to_head",
+    "plot_driver_styling",
+    "plot_tire_analysis",
+    "plot_driver_speed",
+]

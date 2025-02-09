@@ -1,11 +1,13 @@
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import matplotlib.pyplot as plt
 import fastf1 as ff1
 import seaborn as sns
 from plots.utils import setup_cache
+
 
 def test_tire_analysis(wknd=1):  # Default to Bahrain GP
     ff1.Cache.enable_cache(setup_cache())
@@ -14,7 +16,9 @@ def test_tire_analysis(wknd=1):  # Default to Bahrain GP
 
     laps = session.laps.copy()
     laps["LapTimeSeconds"] = laps["LapTime"].dt.total_seconds()
-    laps["FastestStintLap"] = laps.groupby(["Driver", "Stint"])["LapTimeSeconds"].transform("min")
+    laps["FastestStintLap"] = laps.groupby(["Driver", "Stint"])[
+        "LapTimeSeconds"
+    ].transform("min")
     laps["DegDelta"] = laps["LapTimeSeconds"] - laps["FastestStintLap"]
 
     driver_degradation = (
@@ -60,6 +64,7 @@ def test_tire_analysis(wknd=1):  # Default to Bahrain GP
     plt.tight_layout()
     plt.show()  # This will display the plot directly
 
+
 if __name__ == "__main__":
     test_tire_analysis()  # Test with Bahrain GP
-    # test_tire_analysis(2)  # Or test with Saudi Arabian GP 
+    # test_tire_analysis(2)  # Or test with Saudi Arabian GP

@@ -18,7 +18,7 @@ from plots import (
     plot_head_to_head,
     plot_driver_styling,
     plot_tire_analysis,
-    plot_driver_speed
+    plot_driver_speed,
 )
 
 app = Flask(__name__)
@@ -28,24 +28,19 @@ TEMPLATE_NAME = "index.html"
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    
     if request.method == "POST":
         if "head_to_head_submit" in request.form:
             # Handle head-to-head form submission
-            
+            year = int(request.form.get("year", 2024))
+            weekend = int(request.form["wknd"])
+            session_type = request.form.get("session", "R")
+            driver1 = request.form["driver1"]
+            driver2 = request.form["driver2"]
+
             try:
-                year = request.form.get("year")
-                weekend = request.form.get("wknd")  # Get as string first
-                
-                
-                session_type = request.form.get('session')
-                driver1 = request.form.get('driver1')
-                driver2 = request.form.get('driver2')
-                
                 head_to_head_img = plot_head_to_head(
                     year, weekend, session_type, driver1, driver2
                 )
-                
                 return render_template(
                     TEMPLATE_NAME,
                     year=year,
@@ -62,7 +57,7 @@ def index():
                     TEMPLATE_NAME,
                     error="An error occurred while generating the head-to-head comparison.",
                 )
-        if "driver_style_submit" in request.form:
+        elif "driver_style_submit" in request.form:
             # Handle driver style form submission
             year = int(request.form.get("year", 2024))
             weekend = int(request.form["wknd"])
@@ -78,7 +73,7 @@ def index():
                     year=year,
                     weekend=weekend,
                     session=session_type,
-                    
+                    wknd=str(weekend),
                     selected_drivers=selected_drivers,
                     driver_style_img=driver_style_img,
                 )
@@ -88,7 +83,7 @@ def index():
                     TEMPLATE_NAME,
                     error="An error occurred while generating the driver style comparison.",
                 )
-        if "track_speed_submit" in request.form:
+        elif "track_speed_submit" in request.form:
             # Handle track speed form submission
             year = int(request.form.get("speed_year", 2024))
             weekend = int(request.form["speed_wknd"])
@@ -110,18 +105,16 @@ def index():
                     error="An error occurred while generating the track speed analysis.",
                 )
         else:
-            # Handle main form submission
+            # Handle main form submission (existing code)
             year = int(request.form["year"])
-            weekend = int(request.form["wknd"])
+            weekend = int(request.form["weekend"])
             session_type = request.form["session"]
-            driver1 = request.form["driver1"]
-            driver2 = request.form["driver2"]
 
             try:
                 stints_img = plot_driver_stints(year, weekend, session_type)
                 tire_deg_img = plot_tire_deg(year, weekend, session_type)
                 tire_analysis_img = plot_tire_analysis(weekend)
-                head_to_head_img = plot_head_to_head(year, weekend, session_type, driver1, driver2)
+                head_to_head_img = plot_head_to_head(year, weekend, session_type)
                 laptimes_img = plot_laptimes_distribution(year, weekend, session_type)
                 driver_speed_img = plot_driver_speed(year, weekend, session_type)
 

@@ -1,19 +1,23 @@
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import matplotlib.pyplot as plt
 import fastf1 as ff1
 import seaborn as sns
 from plots.utils import setup_cache
 
+
 def plot_tire_analysis(wknd=3):
-    ff1.Cache.enable_cache(setup_cache())
+
     session = ff1.get_session(2024, wknd, "R")
     session.load()
 
     laps = session.laps.copy()
     laps["LapTimeSeconds"] = laps["LapTime"].dt.total_seconds()
-    laps["FastestStintLap"] = laps.groupby(["Driver", "Stint"])["LapTimeSeconds"].transform("min")
+    laps["FastestStintLap"] = laps.groupby(["Driver", "Stint"])[
+        "LapTimeSeconds"
+    ].transform("min")
     laps["DegDelta"] = laps["LapTimeSeconds"] - laps["FastestStintLap"]
 
     driver_degradation = (
@@ -26,11 +30,11 @@ def plot_tire_analysis(wknd=3):
     driver_degradation.sort_values("AvgDeg", inplace=True)
 
     # Create figure with transparent background
-    plt.figure(figsize=(10, 6), facecolor='none')
-    
+    plt.figure(figsize=(10, 6), facecolor="none")
+
     # Set style with transparent background
-    sns.set_style("whitegrid", {'axes.facecolor': 'white'})
-    
+    sns.set_style("whitegrid", {"axes.facecolor": "white"})
+
     # Create the plot
     ax = sns.barplot(
         data=driver_degradation,
@@ -40,11 +44,11 @@ def plot_tire_analysis(wknd=3):
         legend=False,
         palette="RdYlGn_r",
     )
-    
+
     # Set the figure and axes backgrounds transparent
     ax.figure.patch.set_alpha(0)
     ax.patch.set_alpha(1)  # Keep axes background white
-    
+
     plt.title(
         "Which Drivers Managed Their Tires Best? (Lower Degradation = Better)",
         fontsize=14,
@@ -67,6 +71,6 @@ def plot_tire_analysis(wknd=3):
     plt.tight_layout()
     plt.show()  # This will display the plot directly
 
+
 if __name__ == "__main__":
     plot_tire_analysis()  # Test with Bahrain GP
-    

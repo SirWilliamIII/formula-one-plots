@@ -16,8 +16,7 @@ def test_driver_speed(year=2024, wknd=1, ses="R", driver="VER"):
     session = ff1.get_session(year, wknd, ses)
     session.load()
     lap = session.laps.pick_drivers(driver).pick_fastest()
-    
-    
+
     x = lap.telemetry["X"]
     y = lap.telemetry["Y"]
     speed = lap.telemetry["Speed"]
@@ -27,20 +26,20 @@ def test_driver_speed(year=2024, wknd=1, ses="R", driver="VER"):
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
     # Create figure with transparent background and adjusted layout
-    fig = plt.figure(figsize=(15, 10), facecolor='none', constrained_layout=True)
+    fig = plt.figure(figsize=(15, 10), facecolor="none", constrained_layout=True)
     ax = fig.add_subplot(111)
     ax.patch.set_alpha(1)  # Keep axes background white
-    
+
     # Set text colors to #333333
-    plt.rcParams['text.color'] = '#333333'
-    plt.rcParams['axes.labelcolor'] = '#333333'
-    plt.rcParams['axes.edgecolor'] = '#333333'
-    plt.rcParams['xtick.color'] = '#333333'
-    plt.rcParams['ytick.color'] = '#333333'
+    plt.rcParams["text.color"] = "#333333"
+    plt.rcParams["axes.labelcolor"] = "#333333"
+    plt.rcParams["axes.edgecolor"] = "#333333"
+    plt.rcParams["xtick.color"] = "#333333"
+    plt.rcParams["ytick.color"] = "#333333"
 
     # Format title similar to Race Strategy plot
     title = f"Track Speed Analysis {session.event['OfficialEventName']}: {driver}"
-    fig.suptitle(title, size=24, y=0.95, color='#333333')
+    fig.suptitle(title, size=24, y=0.95, color="#333333")
     ax.axis("off")
 
     # Create background track line
@@ -67,13 +66,10 @@ def test_driver_speed(year=2024, wknd=1, ses="R", driver="VER"):
     cbaxes = fig.add_axes([0.25, 0.05, 0.5, 0.03])  # Made thinner
     normlegend = mpl.colors.Normalize(vmin=speed.min(), vmax=speed.max())
     legend = mpl.colorbar.ColorbarBase(
-        cbaxes, 
-        norm=normlegend, 
-        cmap=colormap, 
-        orientation="horizontal"
+        cbaxes, norm=normlegend, cmap=colormap, orientation="horizontal"
     )
-    legend.set_label("Speed (km/h)", color='#333333', size=10, labelpad=8)
-    legend.ax.tick_params(labelsize=9, color='#333333')  # Adjust tick label size
+    legend.set_label("Speed (km/h)", color="#333333", size=10, labelpad=8)
+    legend.ax.tick_params(labelsize=9, color="#333333")  # Adjust tick label size
 
     plt.show()
 
