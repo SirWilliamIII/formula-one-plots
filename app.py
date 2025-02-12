@@ -18,9 +18,9 @@ import os
 from plots import (
     plot_driver_stints,
     plot_tire_deg,
-    plot_laptimes_distribution,
+    plot_lap_distribution,
     plot_head_to_head,
-    plot_driver_styling,
+    plot_driver_style,
     plot_tire_analysis,
     plot_driver_speed,
 )
@@ -70,9 +70,7 @@ def index():
             selected_drivers = request.form.getlist("selected_drivers")
 
             try:
-                driver_style_img = plot_driver_styling(
-                    year, weekend, session_type, selected_drivers
-                )
+                driver_style_img = plot_driver_style(year, weekend, session_type, driver=selected_drivers[0])
                 return render_template(
                     TEMPLATE_NAME,
                     year=year,
@@ -116,11 +114,11 @@ def index():
             session_type = request.form["session"]
 
             try:
-                stints_img = plot_driver_stints(year, weekend, session_type)
+                stints_img = plot_driver_stints(year, weekend, session_type, driver="VER")
                 tire_deg_img = plot_tire_deg(year, weekend, session_type)
                 tire_analysis_img = plot_tire_analysis(weekend)
                 head_to_head_img = plot_head_to_head(year, weekend, session_type)
-                laptimes_img = plot_laptimes_distribution(year, weekend, session_type)
+                laptimes_img = plot_lap_distribution(year, weekend, session_type, driver="VER")
                 driver_speed_img = plot_driver_speed(year, weekend, session_type)
 
                 return render_template(
