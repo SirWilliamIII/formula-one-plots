@@ -2,7 +2,6 @@ import matplotlib
 matplotlib.use("Agg")
 from flask import Flask, render_template, request
 from flask_caching import Cache
-import redis
 import fastf1 as ff1
 from fastf1 import plotting
 from matplotlib import pyplot as plt
@@ -13,10 +12,7 @@ import io
 import base64
 import seaborn as sns
 import os
-from dotenv import load_dotenv
 
-
-load_dotenv()
 
 
 from plots import (
@@ -32,23 +28,10 @@ from plots import (
 app = Flask(__name__)
 
 
-cache_config = {
-    "CACHE_TYPE": "redis",
-    "CACHE_REDIS_HOST": os.getenv('REDIS_HOST', 'localhost'),
-    "CACHE_REDIS_PORT": int(os.getenv('REDIS_PORT', 6379)),
-    "CACHE_REDIS_PASSWORD": os.getenv('REDIS_PASSWORD', None),
-    "CACHE_DEFAULT_TIMEOUT": 300
-}
-
-app.config.from_mapping(cache_config)
-cache = Cache(app)
-
-
 TEMPLATE_NAME = "index.html"
 
 
 @app.route("/", methods=["GET", "POST"])
-@cache.cached(timeout=200)
 def index():
     if request.method == "POST":
         if "head_to_head_submit" in request.form:
@@ -153,11 +136,12 @@ def index():
                     driver_speed_img=driver_speed_img,
                 )
             except Exception as e:
-                # Handle any errors that might occur during plot generation
+                import traceback
                 print(f"Error generating plots: {str(e)}")
+                print(traceback.format_exc())
                 return render_template(
                     TEMPLATE_NAME,
-                    error="An error occurred while generating the plots. Please try different parameters.",
+                    error=f"An error occurred: {str(e)}",
                 )
 
     return render_template(TEMPLATE_NAME)
