@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 import gc
 import matplotlib.pyplot as plt
 import fastf1 as ff1
+from pathlib import Path
 
 def get_redis():
     # Get Redis URL from Heroku config - try both possible environment variables
@@ -40,6 +41,17 @@ def setup_cache():
 def cleanup_memory():
     plt.close('all')
     gc.collect()
+    
+    # Clear FastF1 cache if it's too large
+    cache_dir = setup_cache()
+    try:
+        import shutil
+        cache_size = sum(f.stat().st_size for f in Path(cache_dir).glob('**/*') if f.is_file()) / (1024 * 1024)
+        if cache_size > 400:  # If cache is over 400MB
+            shutil.rmtree(cache_dir)
+            os.makedirs(cache_dir)
+    except Exception as e:
+        print(f"Error cleaning cache: {str(e)}")
 
 def get_plot_cache():
     try:

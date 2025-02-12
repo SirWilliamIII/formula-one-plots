@@ -108,26 +108,41 @@ def index():
                 )
         else:
             # Main form submission
-            year = int(request.form["year"])
-            weekend = int(request.form["weekend"])
-            session_type = request.form["session"]
-            driver = request.form.get("driver", "VER")
-
             try:
-                stints_img = plot_driver_stints(year, weekend, session_type, driver=driver)
-                lap_dist_img = plot_lap_distribution(year, weekend, session_type, driver=driver)
-                driver_style_img = plot_driver_style(year, weekend, session_type, driver=driver)
-                driver_speed_img = plot_driver_speed(year, weekend, session_type, driver=driver)
+                year = int(request.form["year"])
+                weekend = int(request.form["weekend"])
+                session_type = request.form["session"]
+                driver = request.form.get("driver", "VER")
+                
+                images = {}
+                
+                # Load plots sequentially
+                try:
+                    images['stints_img'] = plot_driver_stints(year, weekend, session_type, driver=driver)
+                except Exception as e:
+                    print(f"Error generating stints plot: {str(e)}")
+                
+                try:
+                    images['lap_dist_img'] = plot_lap_distribution(year, weekend, session_type, driver=driver)
+                except Exception as e:
+                    print(f"Error generating lap distribution plot: {str(e)}")
+                
+                try:
+                    images['driver_style_img'] = plot_driver_style(year, weekend, session_type, driver=driver)
+                except Exception as e:
+                    print(f"Error generating driver style plot: {str(e)}")
+                
+                try:
+                    images['driver_speed_img'] = plot_driver_speed(year, weekend, session_type, driver=driver)
+                except Exception as e:
+                    print(f"Error generating driver speed plot: {str(e)}")
 
                 return render_template(
                     TEMPLATE_NAME,
                     year=year,
                     weekend=weekend,
                     session=session_type,
-                    stints_img=stints_img,
-                    lap_dist_img=lap_dist_img,
-                    driver_style_img=driver_style_img,
-                    driver_speed_img=driver_speed_img,
+                    **images
                 )
             except Exception as e:
                 import traceback
@@ -135,7 +150,7 @@ def index():
                 print(traceback.format_exc())
                 return render_template(
                     TEMPLATE_NAME,
-                    error="Request timed out. Please try again with fewer plots or a different session.",
+                    error="Memory limit exceeded. Please try generating plots individually.",
                 )
 
     return render_template(TEMPLATE_NAME)

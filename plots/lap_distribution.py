@@ -25,13 +25,17 @@ def plot_lap_distribution(year, weekend, session_type, driver="VER"):
 
         # Generate plot if not cached
         session = ff1.get_session(year, weekend, session_type)
-        session.load()
+        session.load(telemetry=False, weather=False, messages=False, laps=True)
         
-        driver_laps = session.laps.pick_driver(driver)
+        # Get only the data we need
+        lap_times = session.laps.pick_driver(driver)['LapTime'].dt.total_seconds()
+        
+        # Clear session data
+        session.laps = None
         
         fig, ax = plt.subplots(figsize=(10, 6))
         
-        ax.hist(driver_laps['LapTime'].dt.total_seconds(), 
+        ax.hist(lap_times, 
                 bins=20, 
                 edgecolor='black')
         

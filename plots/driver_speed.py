@@ -30,12 +30,19 @@ def plot_driver_speed(year, weekend, session_type, driver="VER"):
 
         # Generate plot if not cached
         session = ff1.get_session(year, weekend, session_type)
-        session.load()
-        lap = session.laps.pick_drivers(driver).pick_fastest()
-
-        x = lap.telemetry["X"]
-        y = lap.telemetry["Y"]
-        speed = lap.telemetry["Speed"]
+        session.load(telemetry=True, weather=False, messages=False, laps=True)
+        
+        # Get telemetry data for fastest lap only
+        driver_laps = session.laps.pick_driver(driver)
+        fastest_lap = driver_laps.pick_fastest()
+        tel = fastest_lap.get_telemetry()
+        
+        # Clear memory
+        del driver_laps
+        
+        x = tel["X"]
+        y = tel["Y"]
+        speed = tel["Speed"]
         colormap = mpl.cm.plasma
 
         points = np.array([x, y]).T.reshape(-1, 1, 2)
@@ -62,8 +69,8 @@ def plot_driver_speed(year, weekend, session_type, driver="VER"):
 
         # Create background track line
         ax.plot(
-            lap.telemetry["X"],
-            lap.telemetry["Y"],
+            x,
+            y,
             color="#333333",
             linestyle="-",
             linewidth=16,
