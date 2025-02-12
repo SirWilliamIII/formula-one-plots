@@ -7,6 +7,7 @@ from .utils import setup_cache, get_plot_cache
 
 
 def plot_driver_stints(year, weekend, session_type, driver="VER"):
+    img = None
     try:
         # Set up FastF1 cache
         ff1.Cache.enable_cache(setup_cache())
@@ -54,4 +55,5 @@ def plot_driver_stints(year, weekend, session_type, driver="VER"):
     finally:
         # Clean up matplotlib resources
         plt.close('all')
-        img.close()
+        if img is not None:
+            img.close()

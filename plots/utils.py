@@ -21,8 +21,6 @@ def setup_cache():
     # Always return a file path for FastF1
     if os.environ.get('ENV') == 'heroku':
         cache_dir = '/tmp/f1-cache'
-        # Limit cache size on Heroku
-        ff1.Cache.set_size_limit(500)  # MB
     else:
         cache_dir = os.path.expanduser('~/Library/Caches/fastf1')
 
