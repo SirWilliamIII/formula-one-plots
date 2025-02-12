@@ -1,84 +1,57 @@
 import fastf1 as ff1
 import matplotlib.pyplot as plt
+import numpy as np
 import io
 import base64
-import os
-from .utils import setup_cache
+from .utils import setup_cache, get_plot_cache
 
 
-def plot_driver_stints(year, weekend, session_type):
-    ff1.Cache.enable_cache(setup_cache())
-    race = ff1.get_session(year, weekend, session_type)
-    race.load()
+def plot_driver_stints(year, weekend, session_type, driver="VER"):
+    try:
+        # Set up FastF1 cache
+        ff1.Cache.enable_cache(setup_cache())
+        
+        # Get plot cache
+        plot_cache = get_plot_cache()
+        cache_key = f"stints_{year}_{weekend}_{session_type}_{driver}"
+        
+        # Check Redis cache first
+        if plot_cache:
+            cached_plot = plot_cache.get(cache_key)
+            if cached_plot:
+                return cached_plot.decode('utf-8')
 
-    driver_stints = (
-        race.laps[["Driver", "Stint", "Compound", "LapNumber"]]
-        .groupby(["Driver", "Stint", "Compound"])
-        .count()
-        .reset_index()
-    )
-
-    driver_stints = driver_stints.rename(columns={"LapNumber": "StintLength"})
-    driver_stints = driver_stints.sort_values(by=["Stint"])
-
-    compound_colors = {
-        "SOFT": "#FF3333",
-        "MEDIUM": "#FFF200",
-        "HARD": "#EBEBEB",
-        "INTERMEDIATE": "#39B54A",
-        "WET": "#00AEEF",
-    }
-
-    # Create figure with transparent background
-    plt.figure(figsize=(15, 10), facecolor="none")
-
-    # Set style with transparent background
-    plt.rcParams["figure.autolayout"] = True
-
-    # Create the plot
-    fig, ax = plt.subplots(facecolor="none")
-    ax.patch.set_alpha(1)  # Keep axes background white
-
-    # Set text colors to #333333
-    plt.rcParams["text.color"] = "#333333"
-    plt.rcParams["axes.labelcolor"] = "#333333"
-    plt.rcParams["axes.edgecolor"] = "#333333"
-    plt.rcParams["xtick.color"] = "#333333"
-    plt.rcParams["ytick.color"] = "#333333"
-
-    for driver in race.results["Abbreviation"]:
-        stints = driver_stints.loc[driver_stints["Driver"] == driver]
-        previous_stint_end = 0
-        for _, stint in stints.iterrows():
-            plt.barh(
-                [driver],
-                stint["StintLength"],
-                left=previous_stint_end,
-                color=compound_colors[stint["Compound"]],
-                edgecolor="black",
-            )
-            previous_stint_end = previous_stint_end + stint["StintLength"]
-
-    plt.title(f"Race strategy - {race}", color="#333333", pad=15)
-    plt.xlabel("Lap", color="#333333")
-    ax.invert_yaxis()
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_visible(False)
-
-    # Save with transparent background
-    img = io.BytesIO()
-    plt.savefig(
-        img,
-        format="png",
-        dpi=300,
-        bbox_inches="tight",
-        facecolor="none",
-        edgecolor="none",
-        transparent=True,
-    )
-    img.seek(0)
-    plt.close()
-
-    base64_img = base64.b64encode(img.getvalue()).decode("utf8")
-    return f"data:image/png;base64,{base64_img}"
+        # Generate plot if not cached
+        session = ff1.get_session(year, weekend, session_type)
+        session.load()
+        
+        driver_stints = session.laps.pick_driver(driver).get_stints()
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        for idx, stint in driver_stints.iterlaps():
+            ax.plot(stint['LapNumber'], 
+                   stint['LapTime'].dt.total_seconds(),
+                   marker='o',
+                   label=f'Stint {idx+1} ({stint["Compound"].iloc[0]})')
+        
+        ax.set_xlabel('Lap Number')
+        ax.set_ylabel('Lap Time (seconds)')
+        ax.set_title(f'{driver} Stint Analysis - {session.event.year} {session.event.name}')
+        ax.legend()
+        
+        img = io.BytesIO()
+        plt.savefig(img, format='png', dpi=300, bbox_inches='tight')
+        img.seek(0)
+        
+        plot_data = f"data:image/png;base64,{base64.b64encode(img.getvalue()).decode('utf8')}"
+        
+        # Cache the plot in Redis if available
+        if plot_cache:
+            plot_cache.setex(cache_key, 3600, plot_data)  # Cache for 1 hour
+            
+        return plot_data
+    finally:
+        # Clean up matplotlib resources
+        plt.close('all')
+        img.close()

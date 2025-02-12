@@ -1,6 +1,9 @@
 import os
 import redis
 from urllib.parse import urlparse
+import gc
+import matplotlib.pyplot as plt
+import fastf1 as ff1
 
 def get_redis():
     # Get Redis URL from Heroku config - try both possible environment variables
@@ -18,6 +21,8 @@ def setup_cache():
     # Always return a file path for FastF1
     if os.environ.get('ENV') == 'heroku':
         cache_dir = '/tmp/f1-cache'
+        # Limit cache size on Heroku
+        ff1.Cache.set_size_limit(500)  # MB
     else:
         cache_dir = os.path.expanduser('~/Library/Caches/fastf1')
 
@@ -25,8 +30,15 @@ def setup_cache():
         os.makedirs(cache_dir)
     return cache_dir
 
+def cleanup_memory():
+    plt.close('all')
+    gc.collect()
+
 def get_plot_cache():
-    # Return Redis for plot caching if available
-    if os.environ.get('ENV') == 'heroku':
-        return get_redis()
-    return None
+    try:
+        # Return Redis for plot caching if available
+        if os.environ.get('ENV') == 'heroku':
+            return get_redis()
+        return None
+    finally:
+        cleanup_memory()

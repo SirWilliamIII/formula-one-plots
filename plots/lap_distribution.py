@@ -1,63 +1,53 @@
 import fastf1 as ff1
-from fastf1 import plotting
 import matplotlib.pyplot as plt
-import seaborn as sns
+import numpy as np
 import io
 import base64
-from .utils import setup_cache
+from .utils import setup_cache, get_plot_cache
 
+def plot_lap_distribution(year, weekend, session_type, driver="VER"):
+    try:
+        # Set up FastF1 cache
+        ff1.Cache.enable_cache(setup_cache())
+        
+        # Get plot cache
+        plot_cache = get_plot_cache()
+        cache_key = f"lap_dist_{year}_{weekend}_{session_type}_{driver}"
+        
+        # Check Redis cache first
+        if plot_cache:
+            cached_plot = plot_cache.get(cache_key)
+            if cached_plot:
+                return cached_plot.decode('utf-8')
 
-def plot_laptimes_distribution(year, weekend, session_type):
-    plotting.setup_mpl(
-        mpl_timedelta_support=True, misc_mpl_mods=False, color_scheme="fastf1"
-    )
-    ff1.Cache.enable_cache(setup_cache())
-    session = ff1.get_session(year, weekend, session_type)
-    session.load()
-
-    point_finishers = session.drivers[:10]
-    driver_laps = session.laps.pick_drivers(point_finishers).pick_quicklaps()
-    driver_laps = driver_laps.reset_index()
-
-    finishing_order = [session.get_driver(i)["Abbreviation"] for i in point_finishers]
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-
-    driver_laps["LapTime(s)"] = driver_laps["LapTime"].dt.total_seconds()
-
-    sns.violinplot(
-        data=driver_laps,
-        x="Driver",
-        y="LapTime(s)",
-        hue="Driver",
-        inner=None,
-        density_norm="area",
-        order=finishing_order,
-        palette=plotting.get_driver_color_mapping(session=session),
-    )
-
-    sns.swarmplot(
-        data=driver_laps,
-        x="Driver",
-        y="LapTime(s)",
-        order=finishing_order,
-        hue="Compound",
-        palette=plotting.get_compound_mapping(session=session),
-        hue_order=["SOFT", "MEDIUM", "HARD"],
-        linewidth=0,
-        size=4,
-    )
-
-    ax.set_xlabel("Driver")
-    ax.set_ylabel("Lap Time (s)")
-    plt.suptitle(f"{session.event.year} {session.event.name} Lap Time Distributions")
-    sns.despine(left=True, bottom=True)
-
-    plt.tight_layout()
-
-    img = io.BytesIO()
-    plt.savefig(img, format="png", bbox_inches="tight")
-    img.seek(0)
-    plt.close()
-    base64_img = base64.b64encode(img.getvalue()).decode("utf8")
-    return f"data:image/png;base64,{base64_img}"
+        # Generate plot if not cached
+        session = ff1.get_session(year, weekend, session_type)
+        session.load()
+        
+        driver_laps = session.laps.pick_driver(driver)
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        ax.hist(driver_laps['LapTime'].dt.total_seconds(), 
+                bins=20, 
+                edgecolor='black')
+        
+        ax.set_xlabel('Lap Time (seconds)')
+        ax.set_ylabel('Count')
+        ax.set_title(f'{driver} Lap Time Distribution - {session.event.year} {session.event.name}')
+        
+        img = io.BytesIO()
+        plt.savefig(img, format='png', dpi=300, bbox_inches='tight')
+        img.seek(0)
+        
+        plot_data = f"data:image/png;base64,{base64.b64encode(img.getvalue()).decode('utf8')}"
+        
+        # Cache the plot in Redis if available
+        if plot_cache:
+            plot_cache.setex(cache_key, 3600, plot_data)  # Cache for 1 hour
+            
+        return plot_data
+    finally:
+        # Clean up matplotlib resources
+        plt.close('all')
+        img.close()
