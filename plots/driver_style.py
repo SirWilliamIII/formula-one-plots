@@ -28,18 +28,35 @@ def plot_driver_style(year, weekend, session_type, driver="VER"):
         session = ff1.get_session(year, weekend, session_type)
         session.load()
 
-        fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(10, 6))
 
-        laps = session.laps.pick_drivers(driver).pick_quicklaps().reset_index()
-        style = plotting.get_driver_style(
-            identifier=driver, style=["color", "linestyle"], session=session
+        # Get driver's laps
+        driver_laps = session.laps.pick_driver(driver)
+        
+        # Plot lap times
+        ax.plot(
+            range(len(driver_laps['LapTime'])),
+            driver_laps['LapTime'].dt.total_seconds(),
+            label=driver,
+            marker='o'
         )
-        ax.plot(laps["LapTime"], **style, label=driver)
+
+        # Add compound information
+        compounds = driver_laps['Compound'].unique()
+        for compound in compounds:
+            compound_laps = driver_laps[driver_laps['Compound'] == compound]
+            ax.scatter(
+                range(len(compound_laps['LapTime'])), 
+                compound_laps['LapTime'].dt.total_seconds(),
+                label=f'{compound} tires',
+                marker='s'
+            )
 
         ax.set_xlabel("Lap Number")
-        ax.set_ylabel("Lap Time")
+        ax.set_ylabel("Lap Time (seconds)")
+        ax.set_title(f"{driver} Driving Style Analysis - {session.event.year} {session.event.name}")
         ax.legend()
-        plt.title(f"{session.event.year} {session.event.name} Driver Comparison")
+        ax.grid(True)
 
         img = io.BytesIO()
         plt.savefig(img, format='png', dpi=300, bbox_inches='tight')

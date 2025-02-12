@@ -63,21 +63,20 @@ def index():
                     error="An error occurred while generating the head-to-head comparison.",
                 )
         elif "driver_style_submit" in request.form:
-            # Handle driver style form submission
             year = int(request.form.get("year", 2024))
             weekend = int(request.form["wknd"])
             session_type = request.form.get("session", "R")
-            selected_drivers = request.form.getlist("selected_drivers")
+            driver = request.form.get("driver", "VER")
 
             try:
-                driver_style_img = plot_driver_style(year, weekend, session_type, driver=selected_drivers[0])
+                driver_style_img = plot_driver_style(year, weekend, session_type, driver=driver)
                 return render_template(
                     TEMPLATE_NAME,
                     year=year,
                     weekend=weekend,
                     session=session_type,
                     wknd=str(weekend),
-                    selected_drivers=selected_drivers,
+                    driver=driver,
                     driver_style_img=driver_style_img,
                 )
             except Exception as e:
@@ -108,18 +107,17 @@ def index():
                     error="An error occurred while generating the track speed analysis.",
                 )
         else:
-            # Handle main form submission (existing code)
+            # Main form submission
             year = int(request.form["year"])
             weekend = int(request.form["weekend"])
             session_type = request.form["session"]
+            driver = request.form.get("driver", "VER")
 
             try:
-                stints_img = plot_driver_stints(year, weekend, session_type, driver="VER")
-                tire_deg_img = plot_tire_deg(year, weekend, session_type)
-                tire_analysis_img = plot_tire_analysis(weekend)
-                head_to_head_img = plot_head_to_head(year, weekend, session_type)
-                laptimes_img = plot_lap_distribution(year, weekend, session_type, driver="VER")
-                driver_speed_img = plot_driver_speed(year, weekend, session_type)
+                stints_img = plot_driver_stints(year, weekend, session_type, driver=driver)
+                lap_dist_img = plot_lap_distribution(year, weekend, session_type, driver=driver)
+                driver_style_img = plot_driver_style(year, weekend, session_type, driver=driver)
+                driver_speed_img = plot_driver_speed(year, weekend, session_type, driver=driver)
 
                 return render_template(
                     TEMPLATE_NAME,
@@ -127,10 +125,8 @@ def index():
                     weekend=weekend,
                     session=session_type,
                     stints_img=stints_img,
-                    tire_deg_img=tire_deg_img,
-                    tire_analysis_img=tire_analysis_img,
-                    head_to_head_img=head_to_head_img,
-                    laptimes_img=laptimes_img,
+                    lap_dist_img=lap_dist_img,
+                    driver_style_img=driver_style_img,
                     driver_speed_img=driver_speed_img,
                 )
             except Exception as e:
