@@ -15,18 +15,18 @@ def get_redis():
     return None
 
 def setup_cache():
+    # Always return a file path for FastF1
     if os.environ.get('ENV') == 'heroku':
-        # Try to use Redis first
-        redis_client = get_redis()
-        if redis_client:
-            return redis_client
-        
-        # Fallback to tmp directory if Redis isn't available
         cache_dir = '/tmp/f1-cache'
     else:
-        # Use default directory for local development
         cache_dir = os.path.expanduser('~/Library/Caches/fastf1')
 
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
     return cache_dir
+
+def get_plot_cache():
+    # Return Redis for plot caching if available
+    if os.environ.get('ENV') == 'heroku':
+        return get_redis()
+    return None
