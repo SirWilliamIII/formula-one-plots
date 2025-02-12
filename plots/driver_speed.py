@@ -6,6 +6,8 @@ from matplotlib.collections import LineCollection
 import io
 import base64
 from .utils import setup_cache
+import os
+import redis
 
 
 def plot_driver_speed(year, weekend, session_type, driver="VER"):
@@ -81,3 +83,26 @@ def plot_driver_speed(year, weekend, session_type, driver="VER"):
     plt.close()
 
     return f"data:image/png;base64,{base64.b64encode(img.getvalue()).decode('utf8')}"
+
+
+def get_driver_speed_plot(year, grand_prix, session_name):
+    cache = setup_cache()
+    cache_key = f"speed_plot_{year}_{grand_prix}_{session_name}"
+    
+    # If using Redis
+    if isinstance(cache, redis.Redis):
+        cached_plot = cache.get(cache_key)
+        if cached_plot:
+            return cached_plot
+        
+        # Generate plot...
+        # Save to Redis
+        cache.setex(cache_key, 3600, plot_data)  # Cache for 1 hour
+    else:
+        # Your existing file-based caching logic
+        cache_file = os.path.join(cache, cache_key)
+        if os.path.exists(cache_file):
+            return load_from_file(cache_file)
+            
+        # Generate plot...
+        # Save to file
