@@ -26,7 +26,7 @@ def plot_driver_stints(year, weekend, session_type, driver="VER"):
 
         # Generate plot if not cached
         session = ff1.get_session(year, weekend, session_type)
-        session.load()
+        session.load(telemetry=False, weather=False)  # Only load what we need
         
         # Get driver's laps and sort by time
         driver_laps = session.laps.pick_driver(driver).sort_values('Time')

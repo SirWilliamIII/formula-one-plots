@@ -135,7 +135,7 @@ def index():
                 print(traceback.format_exc())
                 return render_template(
                     TEMPLATE_NAME,
-                    error=f"An error occurred: {str(e)}",
+                    error="Request timed out. Please try again with fewer plots or a different session.",
                 )
 
     return render_template(TEMPLATE_NAME)
