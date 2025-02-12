@@ -9,12 +9,21 @@ def get_redis():
     # Get Redis URL from Heroku config - try both possible environment variables
     redis_url = os.getenv('REDISCLOUD_URL') or os.getenv('REDIS_URL')
     if redis_url:
-        url = urlparse(redis_url)
-        return redis.Redis(host=url.hostname, 
-                         port=url.port, 
-                         password=url.password,
-                         ssl=True,
-                         ssl_cert_reqs=None)
+        try:
+            url = urlparse(redis_url)
+            return redis.Redis(
+                host=url.hostname, 
+                port=url.port, 
+                password=url.password,
+                ssl=True,
+                ssl_cert_reqs=None,
+                decode_responses=True,  # Add this to handle string encoding
+                socket_timeout=5,  # Add timeout
+                retry_on_timeout=True  # Add retry logic
+            )
+        except Exception as e:
+            print(f"Redis connection error: {str(e)}")
+            return None
     return None
 
 def setup_cache():
@@ -36,7 +45,14 @@ def get_plot_cache():
     try:
         # Return Redis for plot caching if available
         if os.environ.get('ENV') == 'heroku':
-            return get_redis()
+            redis_client = get_redis()
+            if redis_client:
+                try:
+                    redis_client.ping()  # Test connection
+                    return redis_client
+                except:
+                    print("Redis ping failed, falling back to file cache")
+                    return None
         return None
     finally:
         cleanup_memory()

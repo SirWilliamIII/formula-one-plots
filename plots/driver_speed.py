@@ -18,14 +18,16 @@ def plot_driver_speed(year, weekend, session_type, driver="VER"):
         
         # Get plot cache
         plot_cache = get_plot_cache()
-        cache_key = f"speed_plot_{year}_{weekend}_{session_type}_{driver}"
-        
-        # Check Redis cache first
         if plot_cache:
-            cached_plot = plot_cache.get(cache_key)
-            if cached_plot:
-                return cached_plot.decode('utf-8')
-        
+            try:
+                cache_key = f"speed_plot_{year}_{weekend}_{session_type}_{driver}"
+                cached_plot = plot_cache.get(cache_key)
+                if cached_plot:
+                    return cached_plot
+            except Exception as e:
+                print(f"Redis cache error: {str(e)}")
+                plot_cache = None
+
         # Generate plot if not cached
         session = ff1.get_session(year, weekend, session_type)
         session.load()
@@ -97,11 +99,17 @@ def plot_driver_speed(year, weekend, session_type, driver="VER"):
         
         # Cache the plot in Redis if available
         if plot_cache:
-            plot_cache.setex(cache_key, 3600, plot_data)  # Cache for 1 hour
+            try:
+                plot_cache.setex(cache_key, 3600, plot_data)
+            except Exception as e:
+                print(f"Redis cache set error: {str(e)}")
         
         return plot_data
+    except Exception as e:
+        print(f"Error in plot_driver_speed: {str(e)}")
+        raise
     finally:
-        # Clean up matplotlib resources
-        plt.close('all')
+        if plt is not None:
+            plt.close('all')
         if img is not None:
             img.close()
