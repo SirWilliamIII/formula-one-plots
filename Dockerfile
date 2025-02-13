@@ -1,8 +1,13 @@
-# Use Python 3.11 slim image as base
-FROM python:3.11-slim
+# Use Python 3.11.11 slim image as base
+FROM python:3.11.11-slim
 
 # Set working directory
 WORKDIR /app
+
+# Set environment variables
+ENV FASTF1_CACHE_DIR=/app/cache/fastf1
+ENV ENV=docker
+ENV MPLCONFIGDIR=/app/cache/matplotlib
 
 # Install system dependencies required for matplotlib and other packages
 RUN apt-get update && apt-get install -y \
@@ -10,16 +15,18 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create cache directory for FastF1 with proper permissions
-RUN mkdir -p /cache/fastf1 && \
-    chmod 777 /cache/fastf1
+# Create cache directories with proper permissions
+RUN mkdir -p /app/cache/fastf1 && \
+    mkdir -p /app/cache/matplotlib && \
+    chmod 777 /app/cache/fastf1 && \
+    chmod 777 /app/cache/matplotlib
 
 RUN apt-get update && apt-get install -y redis-server \
     && rm -rf /var/lib/apt/lists/*
 
 
 # Set environment variable for FastF1 cache
-ENV FASTF1_CACHE_DIR=/cache/fastf1
+ENV FASTF1_CACHE_DIR=/app/cache/fastf1
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .

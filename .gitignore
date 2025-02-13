@@ -9,14 +9,3 @@
 
 .env.local
 
-__pycache__/
-*.py[cod]
-*$py.class
-.env
-.DS_Store
-*.pyc
-.pytest_cache/
-.coverage
-htmlcov/
-
-./tests/*

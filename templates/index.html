@@ -28,7 +28,7 @@
             <h2 class="text-xl font-semibold text-gray-800 mb-4">Head to Head Comparison</h2>
             
             <!-- Form Section -->
-            <form method="POST" class="space-y-6" onsubmit="return showLoading();">
+            <form method="POST" class="space-y-6">
                 <div class="space-y-4">
                     <div>
                         <label for="wknd" class="block text-sm font-medium text-gray-700 mb-1">Grand Prix</label>
@@ -443,16 +443,5 @@
             <p class="text-sm">Data provided by FastF1</p>
         </div>
     </footer>
-
-    <script>
-    function showLoading() {
-        document.getElementById('loading').style.display = 'block';
-        return true;
-    }
-    </script>
-
-    <div id="loading" style="display:none;">
-        Loading plots, please wait...
-    </div>
 </body>
 </html>

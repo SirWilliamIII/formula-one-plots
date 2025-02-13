@@ -18,7 +18,7 @@ def plot_head_to_head(year, weekend, session_type, driver1="VER", driver2="PER")
     d2_fast = session.laps.pick_drivers(driver2).pick_fastest()
     telemetry_d1 = d1_fast.get_car_data().add_distance()
     telemetry_d2 = d2_fast.get_car_data().add_distance()
-
+    
     fig, ax = plt.subplots(4, figsize=(15, 15))
     fig.suptitle("Fastest Race Lap Telemetry Comparison")
 

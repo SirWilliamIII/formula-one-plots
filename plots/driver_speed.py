@@ -5,118 +5,79 @@ import numpy as np
 from matplotlib.collections import LineCollection
 import io
 import base64
-from .utils import setup_cache, get_plot_cache
-import os
-import redis
+from .utils import setup_cache
 
 
 def plot_driver_speed(year, weekend, session_type, driver="VER"):
-    img = None
-    try:
-        # Set up FastF1 cache
-        ff1.Cache.enable_cache(setup_cache())
-        
-        # Get plot cache
-        plot_cache = get_plot_cache()
-        if plot_cache:
-            try:
-                cache_key = f"speed_plot_{year}_{weekend}_{session_type}_{driver}"
-                cached_plot = plot_cache.get(cache_key)
-                if cached_plot:
-                    return cached_plot
-            except Exception as e:
-                print(f"Redis cache error: {str(e)}")
-                plot_cache = None
+    ff1.Cache.enable_cache(setup_cache())
+    session = ff1.get_session(year, weekend, session_type)
+    session.load()
+    lap = session.laps.pick_drivers(driver).pick_fastest()
 
-        # Generate plot if not cached
-        session = ff1.get_session(year, weekend, session_type)
-        session.load(telemetry=True, weather=False, messages=False, laps=True)
-        
-        # Get telemetry data for fastest lap only
-        driver_laps = session.laps.pick_driver(driver)
-        fastest_lap = driver_laps.pick_fastest()
-        tel = fastest_lap.get_telemetry()
-        
-        # Clear memory
-        del driver_laps
-        
-        x = tel["X"]
-        y = tel["Y"]
-        speed = tel["Speed"]
-        colormap = mpl.cm.plasma
+    x = lap.telemetry["X"]
+    y = lap.telemetry["Y"]
+    speed = lap.telemetry["Speed"]
+    colormap = mpl.cm.plasma
 
-        points = np.array([x, y]).T.reshape(-1, 1, 2)
-        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
-        # Create figure with transparent background and adjusted layout
-        fig = plt.figure(figsize=(15, 8), facecolor="none")  # Reduced height
+    # Create figure with transparent background and adjusted layout
+    fig = plt.figure(figsize=(15, 8), facecolor="none")  # Reduced height
 
-        # Create main axis for track with specific position to leave room for title
-        ax = fig.add_axes([0.1, 0.15, 0.8, 0.75])  # [left, bottom, width, height]
-        ax.patch.set_alpha(1)  # Keep axes background white
+    # Create main axis for track with specific position to leave room for title
+    ax = fig.add_axes([0.1, 0.15, 0.8, 0.75])  # [left, bottom, width, height]
+    ax.patch.set_alpha(1)  # Keep axes background white
 
-        # Set text colors to #333333
-        plt.rcParams["text.color"] = "#333333"
-        plt.rcParams["axes.labelcolor"] = "#333333"
-        plt.rcParams["axes.edgecolor"] = "#333333"
-        plt.rcParams["xtick.color"] = "#333333"
-        plt.rcParams["ytick.color"] = "#333333"
+    # Set text colors to #333333
+    plt.rcParams["text.color"] = "#333333"
+    plt.rcParams["axes.labelcolor"] = "#333333"
+    plt.rcParams["axes.edgecolor"] = "#333333"
+    plt.rcParams["xtick.color"] = "#333333"
+    plt.rcParams["ytick.color"] = "#333333"
 
-        # Format title with adjusted position
-        title = f"Track Speed Analysis {session.event['OfficialEventName']}: {driver}"
-        fig.suptitle(title, size=20, y=0.98, color="#333333")
-        ax.axis("off")
+    # Format title with adjusted position
+    title = f"Track Speed Analysis {session.event['OfficialEventName']}: {driver}"
+    fig.suptitle(title, size=20, y=0.98, color="#333333")
+    ax.axis("off")
 
-        # Create background track line
-        ax.plot(
-            x,
-            y,
-            color="#333333",
-            linestyle="-",
-            linewidth=16,
-            zorder=0,
-        )
+    # Create background track line
+    ax.plot(
+        lap.telemetry["X"],
+        lap.telemetry["Y"],
+        color="#333333",
+        linestyle="-",
+        linewidth=16,
+        zorder=0,
+    )
 
-        # Create a continuous norm to map from data points to colors
-        norm = plt.Normalize(speed.min(), speed.max())
-        lc = LineCollection(segments, cmap=colormap, norm=norm, linestyle="-", linewidth=5)
+    # Create a continuous norm to map from data points to colors
+    norm = plt.Normalize(speed.min(), speed.max())
+    lc = LineCollection(segments, cmap=colormap, norm=norm, linestyle="-", linewidth=5)
 
-        # Set the values used for colormapping
-        lc.set_array(speed)
+    # Set the values used for colormapping
+    lc.set_array(speed)
 
-        # Merge all line segments together
-        line = ax.add_collection(lc)
+    # Merge all line segments together
+    line = ax.add_collection(lc)
 
-        # Create a color bar as a legend with adjusted position
-        cbaxes = fig.add_axes(
-            [0.25, 0.12, 0.5, 0.03]
-        )  # Increased y-position from 0.05 to 0.12
-        normlegend = mpl.colors.Normalize(vmin=speed.min(), vmax=speed.max())
-        legend = mpl.colorbar.ColorbarBase(
-            cbaxes, norm=normlegend, cmap=colormap, orientation="horizontal"
-        )
-        legend.set_label("Speed (km/h)", color="#333333", size=10, labelpad=8)
-        legend.ax.tick_params(labelsize=9, color="#333333")  # Adjust tick label size
+    # Create a color bar as a legend with adjusted position
+    cbaxes = fig.add_axes(
+        [0.25, 0.12, 0.5, 0.03]
+    )  # Increased y-position from 0.05 to 0.12
+    normlegend = mpl.colors.Normalize(vmin=speed.min(), vmax=speed.max())
+    legend = mpl.colorbar.ColorbarBase(
+        cbaxes, norm=normlegend, cmap=colormap, orientation="horizontal"
+    )
+    legend.set_label("Speed (km/h)", color="#333333", size=10, labelpad=8)
+    legend.ax.tick_params(labelsize=9, color="#333333")  # Adjust tick label size
 
-        # Save with transparent background
-        img = io.BytesIO()
-        plt.savefig(img, format="png", dpi=300, facecolor="none", edgecolor="none", transparent=True)
-        img.seek(0)
-        plot_data = f"data:image/png;base64,{base64.b64encode(img.getvalue()).decode('utf8')}"
-        
-        # Cache the plot in Redis if available
-        if plot_cache:
-            try:
-                plot_cache.setex(cache_key, 3600, plot_data)
-            except Exception as e:
-                print(f"Redis cache set error: {str(e)}")
-        
-        return plot_data
-    except Exception as e:
-        print(f"Error in plot_driver_speed: {str(e)}")
-        raise
-    finally:
-        if plt is not None:
-            plt.close('all')
-        if img is not None:
-            img.close()
+    # Save with transparent background
+    img = io.BytesIO()
+    plt.savefig(
+        img, format="png", dpi=300, facecolor="none", edgecolor="none", transparent=True
+    )
+    img.seek(0)
+    plt.close()
+
+    return f"data:image/png;base64,{base64.b64encode(img.getvalue()).decode('utf8')}"

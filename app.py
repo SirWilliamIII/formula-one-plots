@@ -18,9 +18,9 @@ import os
 from plots import (
     plot_driver_stints,
     plot_tire_deg,
-    plot_lap_distribution,
+    plot_laptimes_distribution,
     plot_head_to_head,
-    plot_driver_style,
+    plot_driver_styling,
     plot_tire_analysis,
     plot_driver_speed,
 )
@@ -63,20 +63,23 @@ def index():
                     error="An error occurred while generating the head-to-head comparison.",
                 )
         elif "driver_style_submit" in request.form:
+            # Handle driver style form submission
             year = int(request.form.get("year", 2024))
             weekend = int(request.form["wknd"])
             session_type = request.form.get("session", "R")
-            driver = request.form.get("driver", "VER")
+            selected_drivers = request.form.getlist("selected_drivers")
 
             try:
-                driver_style_img = plot_driver_style(year, weekend, session_type, driver=driver)
+                driver_style_img = plot_driver_styling(
+                    year, weekend, session_type, selected_drivers
+                )
                 return render_template(
                     TEMPLATE_NAME,
                     year=year,
                     weekend=weekend,
                     session=session_type,
                     wknd=str(weekend),
-                    driver=driver,
+                    selected_drivers=selected_drivers,
                     driver_style_img=driver_style_img,
                 )
             except Exception as e:
@@ -107,42 +110,30 @@ def index():
                     error="An error occurred while generating the track speed analysis.",
                 )
         else:
-            # Main form submission
+            # Handle main form submission (existing code)
+            year = int(request.form["year"])
+            weekend = int(request.form["weekend"])
+            session_type = request.form["session"]
+
             try:
-                year = int(request.form["year"])
-                weekend = int(request.form["weekend"])
-                session_type = request.form["session"]
-                driver = request.form.get("driver", "VER")
-                
-                images = {}
-                
-                # Load plots sequentially
-                try:
-                    images['stints_img'] = plot_driver_stints(year, weekend, session_type, driver=driver)
-                except Exception as e:
-                    print(f"Error generating stints plot: {str(e)}")
-                
-                try:
-                    images['lap_dist_img'] = plot_lap_distribution(year, weekend, session_type, driver=driver)
-                except Exception as e:
-                    print(f"Error generating lap distribution plot: {str(e)}")
-                
-                try:
-                    images['driver_style_img'] = plot_driver_style(year, weekend, session_type, driver=driver)
-                except Exception as e:
-                    print(f"Error generating driver style plot: {str(e)}")
-                
-                try:
-                    images['driver_speed_img'] = plot_driver_speed(year, weekend, session_type, driver=driver)
-                except Exception as e:
-                    print(f"Error generating driver speed plot: {str(e)}")
+                stints_img = plot_driver_stints(year, weekend, session_type)
+                tire_deg_img = plot_tire_deg(year, weekend, session_type)
+                tire_analysis_img = plot_tire_analysis(weekend)
+                head_to_head_img = plot_head_to_head(year, weekend, session_type)
+                laptimes_img = plot_laptimes_distribution(year, weekend, session_type)
+                driver_speed_img = plot_driver_speed(year, weekend, session_type)
 
                 return render_template(
                     TEMPLATE_NAME,
                     year=year,
                     weekend=weekend,
                     session=session_type,
-                    **images
+                    stints_img=stints_img,
+                    tire_deg_img=tire_deg_img,
+                    tire_analysis_img=tire_analysis_img,
+                    head_to_head_img=head_to_head_img,
+                    laptimes_img=laptimes_img,
+                    driver_speed_img=driver_speed_img,
                 )
             except Exception as e:
                 import traceback
@@ -150,7 +141,7 @@ def index():
                 print(traceback.format_exc())
                 return render_template(
                     TEMPLATE_NAME,
-                    error="Memory limit exceeded. Please try generating plots individually.",
+                    error=f"An error occurred: {str(e)}",
                 )
 
     return render_template(TEMPLATE_NAME)
